@@ -1,0 +1,11 @@
+torch==1.13.1
+numpy
+torchvision==0.14.1
+tensorboard==2.5.0
+pandas==1.2.4
+matplotlib==3.4.1
+ruamel.yaml==0.17.4
+gym[atari]==0.25.0
+moviepy==1.0.3
+einops==0.3.0
+dm_control
