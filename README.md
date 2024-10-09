@@ -1,5 +1,7 @@
 # Making Offline RL Online: Collaborative World Models for Offline Visual Reinforcement Learning
-
+#### Open-World Reinforcement Learning over Long Short-Term Imagination
+Qi Wang*, Junming Yang*, Yunbo Wang, Xin Jin, Wenjun Zeng, Xiaokang Yang
+[[arXiv]](https://arxiv.org/pdf/2305.15260)  [[Project Page]](https://qiwang067.github.io/coworld)
 ## Getting Strated
 CoWorld is implemented and tested on Ubuntu 20.04 with python == 3.7, PyTorch == 1.13.1:
 
