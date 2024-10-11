@@ -195,10 +195,6 @@ class RoboDesk:
 
     @property
     def obs_space(self):
-        #if self._obs_is_dict:
-        #    spaces = self._env.observation_space.spaces.copy()
-        #else:
-        #    spaces = {self._obs_key: self._env.observation_space}
         return {
             "image": gym.spaces.Box(0, 255, self._size + (3,), dtype=np.uint8),
             'reward': gym.spaces.Box(-np.inf, np.inf, (), dtype=np.float32),
@@ -362,7 +358,8 @@ class CollectDataset:
 
     def __getattr__(self, name):
         return getattr(self._env, name)
-
+    
+    # 主要还是这边处理数据
     def step(self, action):
         obs, reward, done, info = self._env.step(action)
         obs = {k: self._convert(v) for k, v in obs.items()}

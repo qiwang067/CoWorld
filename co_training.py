@@ -5,6 +5,9 @@ import os
 import pathlib
 import sys
 import warnings
+import socket
+import wandb
+import time
 
 os.environ['MUJOCO_GL'] = 'egl'
 
@@ -43,11 +46,9 @@ class Dreamer(nn.Module):
             config.expl_until / config.action_repeat))
         self._metrics = {}
         if config.sc_domain:
-           #self._step = count_steps(config.sc_traindir)
-           self._step = config.step
+           self._step = count_steps(config.sc_traindir)
         else:
-           #self._step = count_steps(config.tg_traindir)
-           self._step = config.step
+           self._step = count_steps(config.tg_traindir)
         # Schedules.
         config.actor_entropy = (
           lambda x=config.actor_entropy: tools.schedule(x, self._step))
@@ -85,7 +86,7 @@ class Dreamer(nn.Module):
         config.imag_gradient_mix = (
             lambda x=config.imag_gradient_mix: tools.schedule(x, self._step))
         self._dataset = dataset
-   
+        
 
     def __call__(self, obs, reset, state=None, reward=None, training=True):
         step = self._step
@@ -111,14 +112,13 @@ class Dreamer(nn.Module):
                 openl = self._wm.video_pred(next(self._dataset))
                 if self._config.video_log:
                     self._logger.video('train_openl', to_np(openl))
-                self._logger.write(step=self._step, fps=True, target=not self._config.sc_domain)
+                self._logger.write(fps=True)
 
         policy_output, state = self._policy(obs, state, training)
 
         if training:
             self._step += len(reset)
-            self._config.step = self._config.action_repeat * self._step
-            #self._logger.step = self._config.action_repeat * self._step
+            self._logger.step = self._config.action_repeat * self._step
         return policy_output, state
 
     def _policy(self, obs, state, training):
@@ -168,7 +168,6 @@ class Dreamer(nn.Module):
         # World model training
         metrics = {}
         post, context, mets = self._wm._train(data)
-        # print(mets)
         metrics.update(mets)
         start = post
         if self._config.pred_discount:  # Last step could be terminal.
@@ -193,7 +192,6 @@ class Dreamer(nn.Module):
         # Only world model training
         metrics = {}
         post, context, mets = self._wm._train(data)
-        # print(mets)
         metrics.update(mets)
         for name, value in metrics.items():
             if not name in self._metrics.keys():
@@ -299,8 +297,7 @@ def process_episode(config, logger, mode, train_eps, eval_eps, episode):
     logger.scalar(f'{mode}_episodes', len(cache))
     if mode == 'eval' or config.expl_gifs and config.video_log:
         logger.video(f'{mode}_policy', video[None])
-    logger.write(step=config.step, target=not config.sc_domain)
-    print(f'agent episode Step {config.step}.')
+    logger.write()
 
 
 def main(config):
@@ -325,22 +322,32 @@ def main(config):
     config.log_every //= config.action_repeat
     config.time_limit //= config.action_repeat
     config.act = getattr(torch.nn, config.act)
-    config.step = 0
+
 
     print('Logdir:', logdir)
+    config.experiment_name=str(logdir) 
+    wandb_device = socket.gethostname()+':'+config.device[-1]
     logdir.mkdir(parents=True, exist_ok=True)
     config.sc_traindir.mkdir(parents=True, exist_ok=True)
     config.sc_evaldir.mkdir(parents=True, exist_ok=True)
     config.tg_traindir.mkdir(parents=True, exist_ok=True)
     config.tg_evaldir.mkdir(parents=True, exist_ok=True)
     tg_config = copy.deepcopy(config)  # copy config to target domain
-    #sc_step = count_steps(config.sc_traindir)
-    #tg_step = count_steps(tg_config.tg_traindir)
-    sc_logger = tools.Logger(logdir, config=config)
-    tg_logger = sc_logger
-    #tg_logger = tools.Logger(logdir / 'target_domain', tg_config.action_repeat * tg_step, config=tg_config, target=True)
+    sc_step = count_steps(config.sc_traindir)
+    tg_step = count_steps(tg_config.tg_traindir)
+    sc_logger = tools.Logger(logdir / 'source_domain', config.action_repeat * sc_step)
+    tg_logger = tools.Logger(logdir / 'target_domain', tg_config.action_repeat * tg_step)
+
     config.sc_domain = True
     tg_config.sc_domain = False
+    
+    run_dir = pathlib.Path("results") / config.project_name / config.experiment_name
+    if not run_dir.exists():
+        os.makedirs(str(run_dir))
+    
+    
+    wandb.require("core")
+    wandb.init(project=config.project_name, dir=str(run_dir), notes=wandb_device, name=config.experiment_name+"_"+str(config.seed), config=config)
 
     print('Create source envs.')
     # load source domain data
@@ -377,6 +384,7 @@ def main(config):
     # prefill source domain dataset
     prefill = max(0, config.prefill - count_steps(config.sc_traindir))
     print(f'Prefill dataset ({prefill} steps).')
+    
     if hasattr(sc_acts, 'discrete'):
         random_actor = tools.OneHotDist(torch.zeros_like(torch.Tensor(sc_acts.low))[None])
     else:
@@ -391,8 +399,8 @@ def main(config):
 
     tools.simulate(random_agent, sc_train_envs, prefill)
     tools.simulate(random_agent, sc_eval_envs, episodes=1)
-    #sc_logger.step = config.action_repeat * count_steps(config.sc_traindir)
-    config.step = config.action_repeat * prefill
+    sc_logger.step = config.action_repeat * count_steps(config.sc_traindir)
+
 
     print('Simulate agent.')
     # sample batch dataset
@@ -415,33 +423,25 @@ def main(config):
         tg_agent._task_behavior._tg_behavior = tg_agent._task_behavior
         print("Successful load tg_model")
 
-    # rollout_dir = config.offline_traindir
-    # file_path = os.path.join(rollout_dir, np.random.choice(os.listdir(rollout_dir)))
-    # rollout_data = np.load(file_path, allow_pickle=True)
-
     tg_agent._wm._tg_wm = sc_agent._wm
     tg_agent._task_behavior._tg_behavior = sc_agent._task_behavior
     sc_agent._wm._tg_wm = tg_agent._wm
     sc_state = None
     tg_state = None
 
-    # Step 1: Source domain pre-training
+    # Step 1: source domain pre-training
     for _ in range(3):
         # 10k steps for each epoch
         print("start source domain pre-training")
-        #print(f"source steps: [{config.step}]")
-        sc_logger.write(step=config.step)
+        sc_logger.write()
         print('Start source evaluation.')
-        # video_pred = sc_agent._wm.video_pred(next(sc_eval_dataset))
-        # sc_logger.video('source_eval_openl', to_np(video_pred))
         eval_policy = functools.partial(sc_agent, training=False)
         tools.simulate(eval_policy, sc_eval_envs, episodes=1)
         print('Start source training.')
-        # sc_agent.reward_predictor_training(sc_train_dataset, tg_train_dataset, config.reward_predictor_train_steps)
         sc_state = tools.simulate(sc_agent, sc_train_envs, steps=config.eval_every, state=sc_state)
     config.pre_train = False
 
-    # Step 2: Target domain RSSM training 
+    # Step 2: train RSSM on the target domain
     print("start co-training")
     for _ in range(2):
         # 40 k
@@ -449,34 +449,38 @@ def main(config):
         print("start target world model training")
         for _ in range(int(tg_config.eval_every)):
             tg_agent._train_wm(next(tg_train_dataset))
+            tg_logger.write()
         print('Start source evaluation.')
-        sc_logger.write(step=config.step)
+        sc_logger.write()
         eval_policy = functools.partial(sc_agent, training=False)
         tools.simulate(eval_policy, sc_eval_envs, episodes=1)
         print('Start source domain training.')
         sc_agent._wm.set_tg_dataset(tg_train_dataset)
         sc_state = tools.simulate(sc_agent, sc_train_envs, steps=config.eval_every, state=sc_state)
 
-    # Step 3: Co-training
+    
+    real_start_wall_time = time.time()
+    # Step 3: co-training
     for i in range(6):
         # Start target training
         for _ in range(config.tg_train_steps):
-            tg_logger.write(step=tg_config.step, target=True)
+            tg_logger.write()
             print('Start target evaluation.')
             eval_policy = functools.partial(tg_agent, training=False)
             tools.simulate(eval_policy, tg_eval_envs, episodes=1)
-            tools.evaluate_score(eval_policy, tg_eval_envs, logdir, episodes=10)
+            tools.evaluate_score(eval_policy, tg_eval_envs, logdir, episodes=10, logger=tg_logger, start_wall_time=real_start_wall_time)
             print('Start target training.')
             tg_state = tools.off_simulate(tg_agent, tg_train_envs, tg_config, steps=tg_config.eval_every, state=tg_state)
         # Start source training
         if i == 5: 
             print('Start target evaluation.')
-            tg_logger.write(step=tg_config.step, target=True)
+            tg_logger.write()
             eval_policy = functools.partial(tg_agent, training=False)
             tools.simulate(eval_policy, tg_eval_envs, episodes=1)
+            tools.evaluate_score(eval_policy, tg_eval_envs, logdir, episodes=10, logger=tg_logger, start_wall_time=real_start_wall_time)
             continue
         for _ in range(config.sc_train_steps):
-            sc_logger.write(step=config.step)
+            sc_logger.write()
             print('Start source evaluation.')
             eval_policy = functools.partial(sc_agent, training=False)
             tools.simulate(eval_policy, sc_eval_envs, episodes=1)

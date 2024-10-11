@@ -7,6 +7,8 @@ import pickle
 import re
 import time
 import uuid
+import wandb
+import time
 
 import numpy as np
 
@@ -16,7 +18,6 @@ from torch.nn import functional as F
 from torch import distributions as torchd
 from torch.utils.data import Dataset
 from torch.utils.tensorboard import SummaryWriter
-import wandb
 
 
 class RequiresGrad:
@@ -49,16 +50,15 @@ class TimeRecording:
 
 class Logger:
 
-    def __init__(self, logdir, config=None):
+    def __init__(self, logdir, step):
         self._logdir = logdir
-        wandb.init(project="CoWorld", dir=str(logdir), name=config.wandb_name, config=config)
-        #self._writer = SummaryWriter(log_dir=str(logdir), max_queue=1000)
-        self._config = config
+        self._writer = SummaryWriter(log_dir=str(logdir), max_queue=1000)
         self._last_step = None
         self._last_time = None
         self._scalars = {}
         self._images = {}
         self._videos = {}
+        self.step = step
 
     def scalar(self, name, value):
         self._scalars[name] = float(value)
@@ -69,29 +69,26 @@ class Logger:
     def video(self, name, value):
         self._videos[name] = np.array(value)
 
-    def write(self, step, fps=False, target=False):
+    def write(self, fps=False):
         scalars = list(self._scalars.items())
-        domain_name = 'source' if not target else 'target'
-        #if fps:
-        #    scalars.append(('fps', self._compute_fps(steps)))
-        #print(f'[{domain_name}: {self.step}]', ' / '.join(f'{k} {v:.1f}' for k, v in scalars))
-        #with (self._logdir / 'metrics.jsonl').open('a') as f:
-        #    f.write(json.dumps({'step': self.step, **dict(scalars)}) + '\n')
-        #scalars.append(('custom_step', step))
+        if fps:
+            scalars.append(('fps', self._compute_fps(self.step)))
+        print(f'[{self.step}]', ' / '.join(f'{k} {v:.1f}' for k, v in scalars))
+        with (self._logdir / 'metrics.jsonl').open('a') as f:
+            f.write(json.dumps({'step': self.step, **dict(scalars)}) + '\n')
         for name, value in scalars:
-            wandb.log({f'{domain_name}_scalars/{name}': value, f'{domain_name}_scalars/custom_step': step})
-        if self._config.video_log:
-            for name, value in self._images.items():
-                wandb.log({f'{domain_name}_images/{name}': wandb.Image(value)})
-            for name, value in self._videos.items():
-                name = name if isinstance(name, str) else name.decode('utf-8')
-                if np.issubdtype(value.dtype, np.floating):
-                    value = np.clip(255 * value, 0, 255).astype(np.uint8)
-                B, T, H, W, C = value.shape
-                value = value.transpose(1, 4, 2, 0, 3).reshape((1, T, C, H, B * W))
-                wandb.log({f'{domain_name}_videos/{name}': wandb.Video(value, fps=16)})
+            self._writer.add_scalar('scalars/' + name, value, self.step)
+        for name, value in self._images.items():
+            self._writer.add_image(name, value, self.step)
+        for name, value in self._videos.items():
+            name = name if isinstance(name, str) else name.decode('utf-8')
+            if np.issubdtype(value.dtype, np.floating):
+                value = np.clip(255 * value, 0, 255).astype(np.uint8)
+            B, T, H, W, C = value.shape
+            value = value.transpose(1, 4, 2, 0, 3).reshape((1, T, C, H, B * W))
+            self._writer.add_video(name, value, self.step, 16)
 
-        #self._writer.flush()
+        self._writer.flush()
         self._scalars = {}
         self._images = {}
         self._videos = {}
@@ -108,21 +105,21 @@ class Logger:
         return steps / duration
 
     def offline_scalar(self, name, value, step):
-        wandb.log({f'scalars/{name}': value}, step=step)
+        self._writer.add_scalar('scalars/' + name, value, step)
 
     def offline_video(self, name, value, step):
         if np.issubdtype(value.dtype, np.floating):
             value = np.clip(255 * value, 0, 255).astype(np.uint8)
         B, T, H, W, C = value.shape
         value = value.transpose(1, 4, 2, 0, 3).reshape((1, T, C, H, B * W))
-        wandb.log({name: wandb.Video(value, fps=16)}, step=step)
+        self._writer.add_video(name, value, step, 16)
 
 
 def simulate(agent, envs, steps=0, episodes=0, state=None):
     # Initialize or unpack simulation state.
     if state is None:
         step, episode = 0, 0
-        done = np.ones(len(envs), np.bool_)
+        done = np.ones(len(envs), np.bool)
         length = np.zeros(len(envs), np.int32)
         obs = [None] * len(envs)
         agent_state = None
@@ -157,10 +154,9 @@ def simulate(agent, envs, steps=0, episodes=0, state=None):
         length += 1
         step += (done * length).sum()
         length *= (1 - done)
-    
-    #if not random and not episodes:
-    #    config._step += step
-    return (step - steps, episode - episodes, done, length, obs, agent_state, reward)
+
+    return step - steps, episode - episodes, done, length, obs, agent_state, reward
+
 
 
 def off_simulate(agent, envs, config, steps=0, episodes=0, state=None):
@@ -202,14 +198,13 @@ def off_simulate(agent, envs, config, steps=0, episodes=0, state=None):
         step += (done * length).sum()
         length *= (1 - done)
 
-    #if not episodes:
-    #    config._step += step
     return (step - steps, episode - episodes, done, length, obs, agent_state, reward)
 
 
-def evaluate_score(agent, envs, save_dir, steps=0, episodes=10, state=None):
+def evaluate_score(agent, envs, save_dir, steps=0, episodes=10, logger=None, start_wall_time=None, state=None):
     # Initialize or unpack simulation state.
-    rewards = []
+    rewards = []  
+    succs = []
     if state is None:
         step, episode = 0, 0
         done = np.ones(len(envs), np.bool_)
@@ -220,11 +215,14 @@ def evaluate_score(agent, envs, save_dir, steps=0, episodes=10, state=None):
     else:
         step, episode, done, length, obs, agent_state, reward = state
     tmp_reward = 0
+    tmp_succ = 0
     while episodes and episode < episodes:
         # Reset envs if necessary.
         if done.any():
             rewards.append(tmp_reward)
+            succs.append(float(tmp_succ >= 1.0))
             tmp_reward = 0
+            tmp_succ = 0
             indices = [index for index, d in enumerate(done) if d]
             results = [envs[i].reset() for i in indices]
             for index, result in zip(indices, results):
@@ -242,20 +240,30 @@ def evaluate_score(agent, envs, save_dir, steps=0, episodes=10, state=None):
         assert len(action) == len(envs)
         # Step envs.
         results = [e.step(a) for e, a in zip(envs, action)]
-        obs, reward, done = zip(*[p[:3] for p in results])
+        obs, reward, done, info = zip(*[p[:4] for p in results])
+        succ = info[0]['success']
+        
         obs = list(obs)
         reward = list(reward)
         tmp_reward += sum(reward)
+        tmp_succ += succ
         done = np.stack(done)
         episode += int(done.sum())
         length += 1
         step += (done * length).sum()
         length *= (1 - done)
+    
     rewards.append(tmp_reward)
+    succs.append(float(tmp_succ >= 1.0))
     del rewards[0]
-
+    del succs[0]
+    
+    end_wall_time = time.time()
+    duration_hours = (end_wall_time - start_wall_time)/3600
+    
+    wandb.log({'return':round(np.mean(rewards),0),'std':round(np.std(rewards),0), 'succ_rate':np.mean(succs),'wall_minutes':duration_hours,'steps':logger.step}) # 
     f = open(f"./{save_dir}/score.txt", "a")
-    f.writelines(str(np.mean(rewards)) + "+-" + str(np.std(rewards)) + "\n")
+    f.writelines(str(duration_hours)+","+str(np.mean(rewards)) + "+-" + str(np.std(rewards)) + "\n")
     f.close()
 
 
@@ -271,8 +279,7 @@ def rollout(rollout_dir):
     reward = list((data["reward"][i], ))
     return obs, reward
 
-
-def save_episodes(directory, episodes, save_ep=True):
+def save_episodes(directory, episodes):
     directory = pathlib.Path(directory).expanduser()
     directory.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
@@ -281,29 +288,35 @@ def save_episodes(directory, episodes, save_ep=True):
         identifier = str(uuid.uuid4().hex)
         length = len(episode['reward'])
         filename = directory / f'{timestamp}-{identifier}-{length}.npz'
-        if save_ep:
-            with io.BytesIO() as f1:
-                np.savez_compressed(f1, **episode)
-                f1.seek(0)
-                with filename.open('wb') as f2:
-                    f2.write(f1.read())
+        with io.BytesIO() as f1:
+            np.savez_compressed(f1, **episode)
+            f1.seek(0)
+            with filename.open('wb') as f2:
+                f2.write(f1.read())
         filenames.append(filename)
     return filenames
 
 
 def from_generator(generator, batch_size):
     while True:
-        batch = [next(generator) for _ in range(batch_size)]
-        data = {key: np.stack([sample[key] for sample in batch], axis=0) for key in batch[0].keys()}
+        batch = []
+        for _ in range(batch_size):
+            batch.append(next(generator))
+        data = {}
+        for key in batch[0].keys():
+            data[key] = []
+            for i in range(batch_size):
+                data[key].append(batch[i][key])
+            data[key] = np.stack(data[key], 0)
         yield data
 
 
 def sample_episodes(episodes, length=None, balance=False, seed=0):
     random = np.random.RandomState(seed)
-    total = len(next(iter(list(episodes.values())[0].values())))
     while True:
         episode = random.choice(list(episodes.values()))
         if length:
+            total = len(next(iter(episode.values())))
             available = total - length
             if available < 1:
                 print(f'Skipped short episode of length {available}.')
@@ -657,6 +670,37 @@ def static_scan(fn, inputs, start):
     if type(last) == type({}):
         outputs = [outputs]
     return outputs
+
+
+# Original version
+# def static_scan2(fn, inputs, start, reverse=False):
+#  last = start
+#  outputs = [[] for _ in range(len([start] if type(start)==type({}) else start))]
+#  indices = range(inputs[0].shape[0])
+#  if reverse:
+#    indices = reversed(indices)
+#  for index in indices:
+#    inp = lambda x: (_input[x] for _input in inputs)
+#    last = fn(last, *inp(index))
+#    [o.append(l) for o, l in zip(outputs, [last] if type(last)==type({}) else last)]
+#  if reverse:
+#    outputs = [list(reversed(x)) for x in outputs]
+#  res = [[]] * len(outputs)
+#  for i in range(len(outputs)):
+#    if type(outputs[i][0]) == type({}):
+#      _res = {}
+#      for key in outputs[i][0].keys():
+#        _res[key] = []
+#        for j in range(len(outputs[i])):
+#          _res[key].append(outputs[i][j][key])
+#        #_res[key] = torch.stack(_res[key], 0)
+#        _res[key] = faster_stack(_res[key], 0)
+#    else:
+#      _res = outputs[i]
+#      #_res = torch.stack(_res, 0)
+#      _res = faster_stack(_res, 0)
+#    res[i] = _res
+#  return res
 
 
 class Every:

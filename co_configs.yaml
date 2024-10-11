@@ -38,6 +38,11 @@ defaults:
   reward_k: 0.3
   alpha: 1.5
 
+  # wandb
+  video_log: False
+  experiment_name: null
+  project_name: 'coworld_origin'
+
   # Model
   dyn_cell: 'gru'
   dyn_hidden: 200
@@ -131,15 +136,15 @@ defaults:
   disag_units: 400
   disag_action_cond: False
 
+  # wandb
+  wandb_name: 
+
 metaworld:
 
   sc_num_tasks: 5
   logdir: [./logdir/metaworld]
   source_task: ['metaworld_window-close', 'metaworld_button-press-topdown', 'metaworld_button-press', 'metaworld_door-close', 'metaworld_drawer-close']
-  #source_task: [metaworld_door-close, metaworld_hammer, metaworld_assembly, metaworld_sweep, metaworld_box-close, metaworld_drawer-close, metaworld_pick-place]
   target_task: ['metaworld_door-close']
-  # encoder: {mlp_keys: '$^', cnn_keys: 'image'}
-  # decoder: {mlp_keys: '$^', cnn_keys: 'image'}
   sc_train_steps: 2
   tg_train_steps: 5
   reward_predictor_train_steps: 3
@@ -148,10 +153,7 @@ metaworld:
   dataset_size: 2e6
   pred_discount: False
   grad_heads: ['image', 'reward']
-  # rssm: {hidden: 200, deter: 200}
   actor_ent: 1e-4
-  # kl.free: 1.0
-  #dataset: {batch: 20, length: 50}
   time_limit: 500
   action_repeat: 1
   eval_eps: 10
@@ -178,32 +180,6 @@ robodesk:
   eval_eps: 10
   prefill: 5000
   camera: corner
-
-rlbench:
-
-  logdir: [ ./logdir/rlbench ]
-  source_task: [ ]
-  target_task: [ ]
-  # encoder: {mlp_keys: '$^', cnn_keys: 'image'}
-  # decoder: {mlp_keys: '$^', cnn_keys: 'image'}
-  sc_train_steps: 2
-  tg_train_steps: 5
-  reward_predictor_train_steps: 3
-  eval_every: 1e3
-  pretrain: 100
-  dataset_size: 2e6
-  pred_discount: False
-  grad_heads: [ 'image', 'reward' ]
-  # rssm: {hidden: 200, deter: 200}
-  actor_ent: 1e-4
-  # kl.free: 1.0
-  #dataset: {batch: 20, length: 50}
-  time_limit: 500
-  action_repeat: 1
-  eval_eps: 10
-  prefill: 5000
-  camera: corner
-  sc_domain: False # flag of domain
 
 dmlab:
 

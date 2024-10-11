@@ -332,13 +332,8 @@ class ConvDecoder(nn.Module):
             x = x.reshape([-1, 2, 2, 32 * self._depth])
             x = x.permute(0, 3, 1, 2)
         x = self._cnnt_layers(x)
-        # print(features.shape)
-        # print(x.shape)
         mean = x.reshape(features.shape[:-1] + self._shape)
         mean = mean.permute(0, 1, 3, 4, 2)
-        # print(mean.shape)
-        # print(len(self._shape))
-        # exit()
         return tools.ContDist(torchd.independent.Independent(
             torchd.normal.Normal(mean, 1), len(self._shape)))
 

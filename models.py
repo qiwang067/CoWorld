@@ -78,7 +78,7 @@ class WorldModel(nn.Module):
                 dm_kl_loss = torch.tensor(0.0, dtype=torch.float32).to(self._config.device)
                 dm_kl_value = torch.tensor([0.0, 0.0], dtype=torch.float32).detach()
                 # target domain kl divergence
-                if not self._config.sc_domain and not self._config.pre_train:
+                if not self._config.sc_domain:
                     tg_embed = self._tg_wm.encoder(sg(data))
                     kl_dloss = nn.KLDivLoss(reduction="batchmean")
                     input = torch.log_softmax(embed, dim=2)
