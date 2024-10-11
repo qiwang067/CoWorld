@@ -4,7 +4,7 @@ Qi Wang*, Junming Yang*, Yunbo Wang, Xin Jin, Wenjun Zeng, Xiaokang Yang
 
 [[arXiv]](https://arxiv.org/pdf/2305.15260)  [[Project Page]](https://qiwang067.github.io/coworld)
 
-<img src="assets/overview.png" alt="Teaser image" height="300" />
+<img src="assets/overview.png" alt="Teaser image" height="400" />
 
 ## Getting Strated
 CoWorld is implemented and tested on Ubuntu 20.04 with python == 3.7, PyTorch == 1.13.1:
