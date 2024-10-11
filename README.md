@@ -36,7 +36,7 @@ python3 co_training.py --source_task metaworld_button-press --target_task robode
 python3 co_training.py --source_task walker_walk --target_task walker_downhill --configs defaults dmc
 ```
 ## Citation
-```
+```bib
 @inproceedings{wang2024making,
   title={Making Offline RL Online: Collaborative World Models for Offline Visual Reinforcement Learning}, 
   author={Qi Wang and Junming Yang and Yunbo Wang and Xin Jin and Wenjun Zeng and Xiaokang Yang},
