@@ -1,5 +1,5 @@
 # Making Offline RL Online: Collaborative World Models for Offline Visual Reinforcement Learning
-#### Making Offline RL Online: Collaborative World Models for Offline Visual Reinforcement Learning
+#### Making Offline RL Online: Collaborative World Models for Offline Visual Reinforcement Learning [NeurIPS, 2024]
 Qi Wang*, Junming Yang*, Yunbo Wang, Xin Jin, Wenjun Zeng, Xiaokang Yang
 
 [[arXiv]](https://arxiv.org/pdf/2305.15260)  [[Project Page]](https://qiwang067.github.io/coworld)
