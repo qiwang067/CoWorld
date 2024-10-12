@@ -19,7 +19,8 @@ conda activate coworld
 pip install -r requirements.txt
 ```
 
-3) Copy all files in `./modified_dmc_xml` to the DMC directory in your conda environment, such as `/home/.conda/envs/your_env_name/lib/python3.7/site-packages/dm_control/suite/`. 
+3) Copy all files in `./modified_dmc_xml` to the DMC directory in your conda environment, such as `/home/.conda/envs/your_env_name/lib/python3.7/site-packages/dm_control/suite/`.
+4) Download the offline dataset [here](https://drive.google.com/file/d/1XXXLyx8oX40EXl8GNVgU_PpoPJHolZGJ/view?usp=sharing). 
 
 ## Meta-World/RoboDesk/DMC
 1. Training command on Meta-World:  
