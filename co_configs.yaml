@@ -3,7 +3,7 @@ defaults:
   logdir: null
   sc_traindir: null
   sc_evaldir: null
-  tg_traindir: null # target domain training data
+  tg_traindir: null 
   tg_evaldir: null
   offline_traindir: './push_button_train_eps'  # offline training data
   offline_evaldir: './push_button_train_eps'    # offline evaluation data
