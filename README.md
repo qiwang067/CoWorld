@@ -19,21 +19,26 @@ conda activate coworld
 pip install -r requirements.txt
 ```
 
-3) a) Copy all files in `./modified_dmc_xml` to the DMC directory in your conda environment, such as `/home/.conda/envs/your_env_name/lib/python3.7/site-packages/dm_control/suite/`. 
-b) Put Offline training data and evaluation data into `offline_traindir/` and `offline_evaldir/`. 
+3) Copy all files in `./modified_dmc_xml` to the DMC directory in your conda environment, such as `/home/.conda/envs/your_env_name/lib/python3.7/site-packages/dm_control/suite/`. 
 
 ## Meta-World/RoboDesk/DMC
 1. Training command on Meta-World:  
 ```bash
-python3 co_training.py --source_task metaworld_drawer-close --target_task metaworld_door-close --configs defaults metaworld
+python3 co_training.py --source_task metaworld_drawer-close --target_task metaworld_door-close \
+--offline_traindir 'offline_metaworld_data_path' \
+ --configs defaults metaworld 
 ```
 2. Training command on RoboDesk:  
 ```bash
-python3 co_training.py --source_task metaworld_button-press --target_task robodesk_push_green --configs defaults robodesk
+python3 co_training.py --source_task metaworld_button-press --target_task robodesk_push_green \
+--offline_traindir 'offline_robodesk_data_path' \
+--configs defaults robodesk
 ```
 3. Training command on DMC:  
 ```bash
-python3 co_training.py --source_task walker_walk --target_task walker_downhill --configs defaults dmc
+python3 co_training.py --source_task walker_walk --target_task walker_downhill \
+--offline_traindir 'offline_dmc_data_path' \
+--configs defaults dmc
 ```
 ## Citation
 ```bib
