@@ -20,7 +20,7 @@ pip install -r requirements.txt
 ```
 
 3) a) Copy all files in `./modified_dmc_xml` to the DMC directory in your conda environment, such as `/home/.conda/envs/your_env_name/lib/python3.7/site-packages/dm_control/suite/`. 
-b) Put Offline training data and evaluation data into `./offline_train_data/` and `./offline_eval_data/`. 
+b) Put Offline training data and evaluation data into `offline_traindir/` and `offline_evaldir/`. 
 
 ## Meta-World/RoboDesk/DMC
 1. Training command on Meta-World:  
