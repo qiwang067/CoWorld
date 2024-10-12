@@ -26,7 +26,7 @@ pip install -r requirements.txt
 ```bash
 python3 co_training.py --source_task metaworld_drawer-close --target_task metaworld_door-close \
 --offline_traindir 'offline_metaworld_data_path' \
- --configs defaults metaworld 
+--configs defaults metaworld 
 ```
 2. Training command on RoboDesk:  
 ```bash
