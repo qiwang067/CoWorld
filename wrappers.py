@@ -359,7 +359,6 @@ class CollectDataset:
     def __getattr__(self, name):
         return getattr(self._env, name)
     
-    # 主要还是这边处理数据
     def step(self, action):
         obs, reward, done, info = self._env.step(action)
         obs = {k: self._convert(v) for k, v in obs.items()}
@@ -409,7 +408,7 @@ class CollectDataset:
         return value.astype(dtype)
 
 
-# 定义一个 MetaWorld wrapper
+# MetaWorld wrapper
 class MetaWorld:
     def __init__(self, name, seed=None, action_repeat=1, size=(64, 64), camera=None, gpu="cuda:0"):
         import metaworld
