@@ -1,10 +1,24 @@
-# Making Offline RL Online: Collaborative World Models for Offline Visual Reinforcement Learning
-#### Making Offline RL Online: Collaborative World Models for Offline Visual Reinforcement Learning [NeurIPS, 2024]
-Qi Wang*, Junming Yang*, Yunbo Wang, Xin Jin, Wenjun Zeng, Xiaokang Yang
+<h1 align="center"> [NeurIPS 2024] Making Offline RL Online: Collaborative World Models for Offline Visual Reinforcement Learning </h1>
+<p align="center">
+    Qi Wang*
+    ·
+    Junming Yang*
+    ·
+    Yunbo Wang
+    ·
+    Xin Jin
+    ·
+    Wenjun Zeng
+    ·
+    Xiaokang Yang
+  </p>
 
-[[arXiv]](https://arxiv.org/pdf/2305.15260)  [[Project Page]](https://qiwang067.github.io/coworld)
+<h3 align="center"> <a href="https://arxiv.org/pdf/2305.15260" target="_blank"> arXiv </a> &nbsp;&nbsp; | &nbsp;&nbsp; <a href="https://qiwang067.github.io/coworld" target="_blank"> Website </a> &nbsp;&nbsp; </h3>
+  <div align="center"></div>
 
+<p align="center">
 <img src="assets/overview.png" alt="Teaser image" height="400" />
+</p>
 
 ## Getting Strated
 CoWorld is implemented and tested on Ubuntu 20.04 with python == 3.7, PyTorch == 1.13.1:
