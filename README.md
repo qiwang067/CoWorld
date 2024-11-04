@@ -70,6 +70,7 @@ python3 co_training.py --source_task walker_walk --target_task walker_downhill \
 --offline_traindir 'offline_dmc_data_path' \
 --configs defaults dmc
 ```
+<!--
 ## Citation
 ```bib
 @inproceedings{wang2024making,
@@ -79,6 +80,7 @@ python3 co_training.py --source_task walker_walk --target_task walker_downhill \
   year={2024}
 }
 ```
+-->
 
 ## Acknowledgement
 The codes refer to the implemention of [dreamer-torch](https://github.com/jsikyoon/dreamer-torch). Thanks for the authors！
