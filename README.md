@@ -13,7 +13,7 @@
     Xiaokang Yang
   </p>
 
-<h3 align="center"> <a href="https://openreview.net/pdf?id=ucxQrked0d" target="_blank"> Paper </a> &nbsp;&nbsp;|<a href="https://arxiv.org/pdf/2305.15260" target="_blank"> arXiv </a> &nbsp;&nbsp; | &nbsp;&nbsp; <a href="https://qiwang067.github.io/coworld" target="_blank"> Website </a> &nbsp;&nbsp; </h3>
+<h3 align="center"> <a href="https://openreview.net/pdf?id=ucxQrked0d" target="_blank"> Paper </a> &nbsp;&nbsp; |&nbsp;&nbsp; <a href="https://arxiv.org/pdf/2305.15260" target="_blank"> arXiv </a> &nbsp;&nbsp; | &nbsp;&nbsp; <a href="https://qiwang067.github.io/coworld" target="_blank"> Website </a> &nbsp;&nbsp; </h3>
   <div align="center"></div>
 
 <p align="center">
