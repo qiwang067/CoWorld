@@ -24,6 +24,7 @@
 Training offline RL models using visual inputs poses two significant challenges, <i>i.e.</i>, the overfitting problem in representation learning and the overestimation bias for expected future rewards. Recent work has attempted to alleviate the overestimation bias by encouraging conservative behaviors. This paper, in contrast, tries to build more flexible constraints for value estimation without impeding the exploration of potential advantages. The key idea is to leverage off-the-shelf RL simulators, which can be easily interacted with in an online manner, as the “<i>test bed</i>” for offline policies. To enable effective online-to-offline knowledge transfer, we introduce CoWorld, a model-based RL approach that mitigates cross-domain discrepancies in state and reward spaces. Experimental results demonstrate the effectiveness of CoWorld, outperforming existing RL approaches by large margins.
 </p>
 
+<!--
 **Please consider citing our paper if you find it interesting or helpful to your research.**
 
 ```bib
@@ -34,7 +35,7 @@ Training offline RL models using visual inputs poses two significant challenges,
   year={2024}
 }
 ```
-
+-->
 ## Getting Strated
 CoWorld is implemented and tested on Ubuntu 20.04 with python == 3.7, PyTorch == 1.13.1:
 
@@ -70,8 +71,9 @@ python3 co_training.py --source_task walker_walk --target_task walker_downhill \
 --offline_traindir 'offline_dmc_data_path' \
 --configs defaults dmc
 ```
-<!--
+
 ## Citation
+**If you find this work useful in your research, please consider citing:**
 ```bib
 @inproceedings{wang2024making,
   title={Making Offline RL Online: Collaborative World Models for Offline Visual Reinforcement Learning}, 
@@ -80,7 +82,6 @@ python3 co_training.py --source_task walker_walk --target_task walker_downhill \
   year={2024}
 }
 ```
--->
 
 ## Acknowledgement
 The codes refer to the implemention of [dreamer-torch](https://github.com/jsikyoon/dreamer-torch). Thanks for the authors！
