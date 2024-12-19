@@ -67,7 +67,7 @@ python3 co_training.py --source_task metaworld_button-press --target_task robode
 ```
 3. Training command on DMC:  
 ```bash
-python3 co_training.py --source_task walker_walk --target_task walker_downhill \
+python3 co_training.py --source_task dmc_walker_walk --target_task dmc_walker_run \
 --offline_traindir 'offline_dmc_data_path' \
 --configs defaults dmc
 ```
