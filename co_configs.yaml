@@ -184,7 +184,7 @@ robodesk:
 dmc:
 
   # General
-  logdir: []
+  logdir: ['./log']
   task: ['dmc_walker_nofoot']
   source_task: ['dmc_walker_nofoot']
   target_task: ['dmc_walker_nofoot']
@@ -343,54 +343,6 @@ atari:
   actor_lr: 4e-5
   value_lr: 1e-4
   oversample_ends: True
-
-dmc:
-
-  # General
-  task: 'dmc_walker_walk'
-  steps: 1e7
-  eval_every: 1e4
-  log_every: 1e4
-  prefill: 2500
-  dataset_size: 0
-  pretrain: 100
-
-  # Environment
-  time_limit: 1000
-  action_repeat: 2
-  train_every: 5
-  train_steps: 1
-
-  # Model
-  grad_heads: ['image', 'reward']
-  dyn_cell: 'gru_layer_norm'
-  pred_discount: False
-  cnn_depth: 32
-  dyn_deter: 200
-  dyn_stoch: 50
-  dyn_discrete: 0
-  reward_layers: 2
-  discount_layers: 3
-  value_layers: 3
-  actor_layers: 4
-
-  # Behavior
-  actor_dist: 'trunc_normal'
-  expl_amount: 0.0
-  actor_entropy: '1e-4'
-  discount: 0.99
-  imag_gradient: 'dynamics'
-  imag_gradient_mix: 1.0
-
-  # Training
-  reward_scale: 2
-  weight_decay: 0.0
-  model_lr: 3e-4
-  value_lr: 8e-5
-  actor_lr: 8e-5
-  opt_eps: 1e-5
-  kl_free: '1.0'
-  kl_scale: '1.0'
 
 debug:
 
