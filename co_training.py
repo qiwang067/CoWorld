@@ -471,7 +471,6 @@ def main(config):
             tools.evaluate_score(eval_policy, tg_eval_envs, logdir, episodes=10, logger=tg_logger, start_wall_time=real_start_wall_time)
             print('Start target training.')
             tg_state = tools.off_simulate(tg_agent, tg_train_envs, tg_config, steps=tg_config.eval_every, state=tg_state)
-        # Start source training
         if i == 5: 
             print('Start target evaluation.')
             tg_logger.write()
@@ -479,6 +478,7 @@ def main(config):
             tools.simulate(eval_policy, tg_eval_envs, episodes=1)
             tools.evaluate_score(eval_policy, tg_eval_envs, logdir, episodes=10, logger=tg_logger, start_wall_time=real_start_wall_time)
             continue
+        # Start source training
         for _ in range(config.sc_train_steps):
             sc_logger.write()
             print('Start source evaluation.')
