@@ -83,7 +83,7 @@ python3 co_training.py --source_task dmc_walker_walk --target_task dmc_walker_ru
 }
 ```
 
-## Acknowledgement
+## Credits
 The codes refer to the implemention of [dreamer-torch](https://github.com/jsikyoon/dreamer-torch). Thanks for the authors！
 
 
